@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Powerful Bash Cheat Sheet untuk Pentesting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f1f5f9; /* bg-slate-100 */
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        .main-content {
+            scroll-margin-top: 80px;
+        }
+        .nav-link.active {
+            background-color: #0284c7; /* bg-sky-600 */
+            color: white;
+            font-weight: 600;
+        }
+        .command-card:target {
+            animation: highlight 1.5s ease-out;
+        }
+        @keyframes highlight {
+            from { background-color: #bae6fd; } /* bg-sky-200 */
+            to { background-color: white; }
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Powerful Bash Cheat Sheet</h1>
+            <p class="text-slate-600 mt-2">Rangkuman interaktif untuk *Penetration Testing*</p>
+        </header>
+
+        <div class="sticky top-0 z-10 py-4 bg-slate-100/80 backdrop-blur-sm mb-8">
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Cari perintah (misal: 'grep', 'network', 'copy')..." class="w-full p-4 pl-12 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-2xl">🔍</span>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-8">
+            
+            <aside class="md:w-1/4 lg:w-1/5">
+                <nav id="categoryNav" class="sticky top-28 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible pb-4 md:pb-0">
+                    </nav>
+            </aside>
+
+            <main class="w-full md:w-3/4 lg:w-4/5">
+                <div id="commandList" class="space-y-8">
+                    </div>
+                 <div id="noResults" class="hidden text-center p-8 bg-white rounded-lg shadow-md">
+                    <p class="text-xl font-semibold">Tidak ada hasil ditemukan</p>
+                    <p class="text-slate-500 mt-2">Coba kata kunci pencarian yang lain.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const commandsData = [
+            { category: 'Navigasi Sistem File', command: 'cd', description: 'Pindah direktori.' },
+            { category: 'Navigasi Sistem File', command: 'pwd', description: 'Tampilkan direktori saat ini. / Mengembalikan nama direktori kerja.' },
+            { category: 'Navigasi Sistem File', command: 'ls', description: 'Daftar isi direktori.' },
+            { category: 'Navigasi Sistem File', command: 'tree', description: 'Tampilkan struktur direktori (mungkin perlu instalasi). / Menampilkan isi direktori secara rekursif.' },
+            { category: 'Navigasi Sistem File', command: 'find', description: 'Cari file berdasarkan nama atau kriteria lain. / Mencari file dalam hierarki direktori.' },
+
+            { category: 'Manipulasi File dan Direktori', command: 'cp', description: 'Salin file atau direktori.' },
+            { category: 'Manipulasi File dan Direktori', command: 'mv', description: 'Pindahkan atau ganti nama file atau direktori.' },
+            { category: 'Manipulasi File dan Direktori', command: 'rm', description: 'Hapus file atau direktori.' },
+            { category: 'Manipulasi File dan Direktori', command: 'mkdir', description: 'Buat direktori baru.' },
+            { category: 'Manipulasi File dan Direktori', command: 'touch', description: 'Buat file kosong.' },
+            { category: 'Manipulasi File dan Direktori', command: 'nano / vim', description: 'Editor teks berbasis terminal.' },
+            { category: 'Manipulasi File dan Direktori', command: 'cat', description: 'Gabungkan dan cetak isi file.' },
+            { category: 'Manipulasi File dan Direktori', command: 'less', description: 'Lihat isi file (alternatif dari `more` dengan lebih banyak fitur).' },
+            { category: 'Manipulasi File dan Direktori', command: 'more', description: 'Pager yang digunakan untuk membaca STDOUT atau file.' },
+            { category: 'Manipulasi File dan Direktori', command: 'head', description: 'Mencetak sepuluh baris pertama dari STDOUT atau file.' },
+            { category: 'Manipulasi File dan Direktori', command: 'tail', description: 'Mencetak sepuluh baris terakhir dari STDOUT atau file.' },
+
+            { category: 'Pencarian dan Penyaringan Teks', command: 'grep', description: 'Cari pola di dalam file. / Mencari hasil spesifik yang mengandung pola tertentu.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'locate', description: 'Cari file (menggunakan database, bisa lebih cepat).' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'updatedb', description: 'Memperbarui database lokal untuk konten yang ada di sistem.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'cut', description: 'Saring dan modifikasi teks. / Menghapus bagian dari setiap baris file.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'awk', description: 'Bahasa pemindaian dan pemrosesan pola.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'sed', description: 'Editor aliran untuk menyaring dan mengubah teks.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'sort', description: 'Urutkan baris file teks. / Mengurutkan isi STDOUT atau file.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'uniq', description: 'Hapus baris duplikat.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'tr', description: 'Mengganti karakter tertentu.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'wc', description: 'Mencetak jumlah baris baru, kata, dan byte untuk input tertentu.' },
+            { category: 'Pencarian dan Penyaringan Teks', command: 'column', description: 'Utilitas berbasis baris perintah yang memformat inputnya menjadi beberapa kolom.' },
+
+            { category: 'Pemantauan dan Informasi Sistem', command: 'top / htop', description: 'Pantau proses.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'ps', description: 'Menampilkan status proses. / Mencetak snapshot dari proses saat ini.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'ps aux', description: 'Lihat semua proses.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'df -h', description: 'Tampilkan penggunaan ruang disk.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'du -sh', description: 'Tampilkan ukuran direktori/file.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'free -h', description: 'Tampilkan informasi memori.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'uptime', description: 'Tampilkan berapa lama sistem telah berjalan.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'hostname', description: 'Mengatur atau mencetak nama sistem host saat ini.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'uname', description: 'Mencetak nama sistem operasi.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'env', description: 'Mencetak lingkungan atau mengatur dan menjalankan perintah.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'lsblk', description: 'Menampilkan daftar perangkat blok.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'lsof', description: 'Menampilkan daftar file yang dibuka.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'lspci', description: 'Menampilkan daftar perangkat PCI.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'lsusb', description: 'Menampilkan daftar perangkat USB.' },
+            { category: 'Pemantauan dan Informasi Sistem', command: 'journalctl', description: 'Kueri jurnal systemd.' },
+
+            { category: 'Analisis Jaringan', command: 'ip a / ip r / ip link', description: 'Tampilkan informasi IP dan routing.' },
+            { category: 'Analisis Jaringan', command: 'ip', description: 'Utilitas untuk menampilkan atau memanipulasi routing, perangkat jaringan, antarmuka, dan tunnel.' },
+            { category: 'Analisis Jaringan', command: 'ifconfig', description: 'Digunakan untuk menetapkan atau melihat alamat ke antarmuka jaringan dan/atau mengkonfigurasi parameter antarmuka jaringan.' },
+            { category: 'Analisis Jaringan', command: 'ping', description: 'Cek konektivitas ke host.' },
+            { category: 'Analisis Jaringan', command: 'traceroute / tracepath', description: 'Lacak jalur ke host.' },
+            { category: 'Analisis Jaringan', command: 'netstat', description: 'Menampilkan status jaringan.' },
+            { category: 'Analisis Jaringan', command: 'ss', description: 'Utilitas lain untuk menyelidiki socket (dapat menampilkan port dan koneksi aktif).' },
+            { category: 'Analisis Jaringan', command: 'dig / nslookup', description: 'Kueri DNS.' },
+            { category: 'Analisis Jaringan', command: 'curl', description: 'Ambil URL/file dari web. / Utilitas baris perintah untuk mentransfer data dari atau ke server.' },
+            { category: 'Analisis Jaringan', command: 'wget', description: 'Ambil URL/file dari web. / Alternatif untuk curl yang mengunduh file dari server FTP atau HTTP(s).' },
+            { category: 'Analisis Jaringan', command: 'python3 -m http.server', description: 'Memulai server web Python3 pada port TCP 8000.' },
+
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'chmod', description: 'Ubah hak akses file.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'chown', description: 'Ubah pemilik dan grup file.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'sudo', description: 'Jalankan perintah sebagai pengguna lain (superuser secara default).' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'su', description: 'Meminta kredensial pengguna yang sesuai dan beralih ke ID pengguna tersebut (pengguna default adalah superuser). Sebuah shell kemudian dieksekusi.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'whoami', description: 'Tampilkan nama pengguna saat ini.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'id', description: 'Tampilkan informasi pengguna dan grup.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'passwd', description: 'Ganti kata sandi pengguna.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'who', description: 'Menampilkan siapa yang sedang login.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'useradd', description: 'Membuat pengguna baru atau memperbarui informasi pengguna baru default.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'userdel', description: 'Menghapus akun pengguna dan file terkait.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'usermod', description: 'Memodifikasi akun pengguna.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'addgroup', description: 'Menambahkan grup ke sistem.' },
+            { category: 'Manajemen Pengguna dan Hak Akses', command: 'delgroup', description: 'Menghapus grup dari sistem.' },
+
+            { category: 'Skrip dan Utilitas Shell', command: 'echo / printf', description: 'Keluarkan teks.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'read', description: 'Input dari pengguna.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'alias', description: 'Buat alias perintah.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'history', description: 'Lihat perintah yang digunakan sebelumnya.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'bash', description: 'Masuk ke shell baru.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'which', description: 'Mengembalikan path ke file atau tautan.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'whereis / type', description: 'Cari lokasi executable.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'clear', description: 'Membersihkan terminal.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'man <tool>', description: 'Membuka halaman manual untuk tool yang ditentukan.' },
+            { category: 'Skrip dan Utilitas Shell', command: '<tool> -h', description: 'Mencetak halaman bantuan dari tool.' },
+            { category: 'Skrip dan Utilitas Shell', command: 'apropos <keyword>', description: 'Mencari melalui deskripsi halaman manual untuk instans dari kata kunci yang diberikan.' },
+
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'apt update', description: 'Perbarui informasi repositori.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'apt upgrade', description: 'Tingkatkan semua paket.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'apt install <package>', description: 'Instal paket.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'apt remove <package>', description: 'Hapus paket.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'apt', description: 'Utilitas baris perintah manajemen paket tingkat tinggi.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'dpkg -i <file.deb>', description: 'Instal paket .deb lokal.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'dpkg', description: 'Instal, hapus, dan konfigurasikan paket berbasis Debian.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'aptitude', description: 'Alternatif untuk apt.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'snap', description: 'Instal, hapus, dan konfigurasikan paket snap.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'gem', description: 'Manajer paket standar untuk Ruby.' },
+            { category: 'Manajemen Paket dan Perangkat Lunak', command: 'pip', description: 'Manajer paket standar untuk Python.' },
+
+            { category: 'Manajemen Proses', command: 'kill', description: 'Mengirim sinyal ke proses.' },
+            { category: 'Manajemen Proses', command: 'bg', description: 'Menempatkan proses ke latar belakang.' },
+            { category: 'Manajemen Proses', command: 'jobs', description: 'Menampilkan daftar semua proses yang berjalan di latar belakang.' },
+            { category: 'Manajemen Proses', command: 'fg', description: 'Menempatkan proses ke latar depan.' },
+            { category: 'Manajemen Proses', command: 'systemctl', description: 'Manajer kontrol layanan dan systemd berbasis baris perintah.' },
+
+            { category: 'Kontrol Versi', command: 'git', description: 'Utilitas baris perintah sistem kontrol revisi.' },
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const commandListContainer = document.getElementById('commandList');
+            const categoryNavContainer = document.getElementById('categoryNav');
+            const searchInput = document.getElementById('searchInput');
+            const noResultsDiv = document.getElementById('noResults');
+
+            const categories = [...new Set(commandsData.map(cmd => cmd.category))];
+
+            function generateSlug(text) {
+                return text.toString().toLowerCase()
+                    .replace(/\s+/g, '-')
+                    .replace(/[^\w\-]+/g, '')
+                    .replace(/\-\-+/g, '-')
+                    .replace(/^-+/, '')
+                    .replace(/-+$/, '');
+            }
+
+            function renderContent(filter = '') {
+                commandListContainer.innerHTML = '';
+                categoryNavContainer.innerHTML = '';
+                let visibleCommandsCount = 0;
+
+                categories.forEach(category => {
+                    const categorySlug = generateSlug(category);
+                    const filteredCommands = commandsData.filter(cmd => 
+                        cmd.category === category &&
+                        (cmd.command.toLowerCase().includes(filter.toLowerCase()) || cmd.description.toLowerCase().includes(filter.toLowerCase()))
+                    );
+
+                    if (filteredCommands.length > 0) {
+                        const categoryCard = document.createElement('div');
+                        categoryCard.id = categorySlug;
+                        categoryCard.className = 'command-card main-content bg-white p-6 rounded-lg shadow-md';
+                        
+                        let commandRows = filteredCommands.map(cmd => {
+                             visibleCommandsCount++;
+                             return `
+                                <div class="command-row flex flex-col md:flex-row items-start md:items-center py-3 border-b border-slate-200 last:border-b-0">
+                                    <div class="w-full md:w-1/3 mb-2 md:mb-0">
+                                        <code class="font-mono text-base bg-slate-100 text-sky-700 py-1 px-2 rounded-md">${cmd.command}</code>
+                                    </div>
+                                    <div class="w-full md:w-2/3 text-slate-600">${cmd.description}</div>
+                                    <div class="w-full md:w-auto mt-2 md:mt-0 md:ml-4 flex justify-end">
+                                        <button class="copy-btn text-slate-400 hover:text-sky-600 transition-colors" title="Salin perintah">
+                                            <span class="copy-icon">📋</span>
+                                            <span class="copied-feedback hidden text-green-500 font-semibold">Tersalin!</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+
+                        categoryCard.innerHTML = `
+                            <h2 class="text-2xl font-bold mb-4 text-slate-900">${category}</h2>
+                            <div class="divide-y divide-slate-100">
+                                ${commandRows}
+                            </div>
+                        `;
+                        commandListContainer.appendChild(categoryCard);
+                    }
+
+                    // Navigation Link
+                    const navLink = document.createElement('a');
+                    navLink.href = `#${categorySlug}`;
+                    navLink.textContent = category;
+                    navLink.className = 'nav-link flex-shrink-0 text-left p-3 my-1 rounded-lg hover:bg-sky-100 transition-colors duration-200';
+                    categoryNavContainer.appendChild(navLink);
+                });
+                
+                if (visibleCommandsCount === 0) {
+                    noResultsDiv.classList.remove('hidden');
+                } else {
+                    noResultsDiv.classList.add('hidden');
+                }
+            }
+
+            function updateActiveNavLink() {
+                let currentCategory = '';
+                const sections = document.querySelectorAll('.main-content');
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (window.scrollY >= sectionTop - 100) {
+                        currentCategory = section.id;
+                    }
+                });
+                
+                const links = document.querySelectorAll('.nav-link');
+                links.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${currentCategory}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+
+            function copyToClipboard(e) {
+                if (e.target.closest('.copy-btn')) {
+                    const button = e.target.closest('.copy-btn');
+                    const commandRow = button.closest('.command-row');
+                    const commandText = commandRow.querySelector('code').innerText;
+                    
+                    const textarea = document.createElement('textarea');
+                    textarea.value = commandText;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    try {
+                        document.execCommand('copy');
+                        const copyIcon = button.querySelector('.copy-icon');
+                        const copiedFeedback = button.querySelector('.copied-feedback');
+
+                        copyIcon.classList.add('hidden');
+                        copiedFeedback.classList.remove('hidden');
+                        
+                        setTimeout(() => {
+                           copyIcon.classList.remove('hidden');
+                           copiedFeedback.classList.add('hidden');
+                        }, 2000);
+
+                    } catch (err) {
+                        console.error('Gagal menyalin teks: ', err);
+                    }
+                    document.body.removeChild(textarea);
+                }
+            }
+
+            searchInput.addEventListener('input', () => renderContent(searchInput.value));
+            window.addEventListener('scroll', updateActiveNavLink);
+            commandListContainer.addEventListener('click', copyToClipboard);
+            
+            renderContent();
+            updateActiveNavLink();
+        });
+    </script>
+
+</body>
+</html>
